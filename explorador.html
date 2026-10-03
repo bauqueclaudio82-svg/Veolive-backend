@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Veo Live - Explorador</title>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #000; color: #fff; overflow: hidden; height: 100vh; }
+    
+    .explorer-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(180deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.8) 100%),
+                  url('https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1000&auto=format&fit=crop') center/cover no-repeat;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+    }
+
+    .header-overlay {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+    }
+    .badge-live {
+      background: #ff3b30;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 12px;
+      letter-spacing: 1px;
+      animation: pulse 1.5s infinite;
+    }
+    .timer-badge {
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Cartel de Alerta Flotante */
+    .alert-banner {
+      display: none;
+      background: rgba(40, 167, 69, 0.95);
+      border: 2px solid #fff;
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      animation: bounce 0.5s ease;
+      margin: 0 10px;
+    }
+    .alert-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+    .alert-text { font-size: 22px; font-weight: bold; margin-top: 6px; }
+
+    .bottom-controls {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .control-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.4);
+      color: #fff;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .control-btn.end-btn { background: #ff3b30; border: none; }
+
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    @keyframes bounce { 0% { transform: scale(0.8); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+  </style>
+</head>
+<body>
+
+  <div class="explorer-container">
+    <div class="header-overlay">
+      <div class="badge-live">● EN VIVO</div>
+      <div class="timer-badge">⏱️ 14:25 | 👤 1 Espectador</div>
+    </div>
+
+    <!-- Banner donde aparecerán los pedidos del cliente en vivo -->
+    <div class="alert-banner" id="alertBanner">
+      <div class="alert-title" id="alertTitle">💬 Solicitud del Cliente</div>
+      <div class="alert-text" id="alertText">...</div>
+    </div>
+
+    <div class="bottom-controls">
+      <div class="control-btn" title="Girar Cámara">🔄</div>
+      <div class="control-btn" title="Micrófono">🎙️</div>
+      <div class="control-btn end-btn" title="Finalizar Vivo">🛑</div>
+    </div>
+  </div>
+
+  <script>
+    const socket = io('https://veolive-backend.onrender.com');
+    const alertBanner = document.getElementById('alertBanner');
+    const alertText = document.getElementById('alertText');
+
+    socket.on('receive_message', (data) => {
+      showAlert(`${data.sender}: ${data.text}`);
+    });
+
+    function showAlert(msg) {
+      alertText.textContent = msg;
+      alertBanner.style.display = 'block';
+      setTimeout(() => {
+        alertBanner.style.display = 'none';
+      }, 4000);
+    }
+  </script>
+
+</body>
+</html>
