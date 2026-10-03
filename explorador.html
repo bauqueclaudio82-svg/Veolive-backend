@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Veo Live - Explorador Cámara</title>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: #000; color: #fff; overflow: hidden; height: 100vh; }
+    
+    .explorer-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px;
+    }
+
+    /* Video de la Cámara Real */
+    #localVideo {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: 1;
+    }
+
+    /* Capa de interfaz por encima del video */
+    .overlay-ui {
+      position: relative;
+      z-index: 10;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .header-overlay {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 24px;
+    }
+    .badge-live {
+      background: #ff3b30;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 12px;
+      letter-spacing: 1px;
+      animation: pulse 1.5s infinite;
+    }
+    .timer-badge {
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* Cartel de Alerta Flotante */
+    .alert-banner {
+      display: none;
+      background: rgba(40, 167, 69, 0.95);
+      border: 2px solid #fff;
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      animation: bounce 0.5s ease;
+      margin: 0 10px;
+    }
+    .alert-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.9; }
+    .alert-text { font-size: 22px; font-weight: bold; margin-top: 6px; }
+
+    .bottom-controls {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .control-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.4);
+      color: #fff;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .control-btn.end-btn { background: #ff3b30; border: none; }
+
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+    @keyframes bounce { 0% { transform: scale(0.8); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+  </style>
+</head>
+<body>
+
+  <div class="explorer-container">
+    <!-- Elemento Video que muestra la cámara en vivo -->
+    <video id="localVideo" autoplay playsinline muted></video>
+
+    <!-- Interfaz de usuario -->
+    <div class="overlay-ui">
+      <div class="header-overlay">
+        <div class="badge-live">● EN VIVO</div>
+        <div class="timer-badge">⏱️ 00:00 | 👤 1 Espectador</div>
+      </div>
+
+      <!-- Banner de Alerta de Clientes -->
+      <div class="alert-banner" id="alertBanner">
+        <div class="alert-title" id="alertTitle">💬 Solicitud del Cliente</div>
+        <div class="alert-text" id="alertText">...</div>
+      </div>
+
+      <div class="bottom-controls">
+        <div class="control-btn" id="flipBtn" onclick="toggleCamera()" title="Girar Cámara">🔄</div>
+        <div class="control-btn" id="micBtn" onclick="toggleMic()" title="Micrófono">🎙️</div>
+        <div class="control-btn end-btn" title="Finalizar Vivo">🛑</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const socket = io('https://veolive-backend.onrender.com');
+    const alertBanner = document.getElementById('alertBanner');
+    const alertText = document.getElementById('alertText');
+    const videoElement = document.getElementById('localVideo');
+
+    let currentStream = null;
+    let useFacingMode = "environment"; // Inicia con la cámara trasera por defecto
+    let micEnabled = true;
+
+    // Función para activar la cámara del dispositivo
+    async function startCamera() {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+      try {
+        const constraints = {
+          video: { facingMode: useFacingMode },
+          audio: true
+        };
+        currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+        videoElement.srcObject = currentStream;
+      } catch (err) {
+        console.error("Error al acceder a la cámara:", err);
+        alert("No se pudo acceder a la cámara o micrófono. Por favor permite los permisos.");
+      }
+    }
+
+    // Alternar entre cámara frontal y trasera
+    function toggleCamera() {
+      useFacingMode = (useFacingMode === "environment") ? "user" : "environment";
+      startCamera();
+    }
+
+    // Activar / Silenciar micrófono
+    function toggleMic() {
+      if (currentStream) {
+        const audioTrack = currentStream.getAudioTracks()[0];
+        if (audioTrack) {
+          micEnabled = !micEnabled;
+          audioTrack.enabled = micEnabled;
+          document.getElementById('micBtn').style.opacity = micEnabled ? "1" : "0.4";
+        }
+      }
+    }
+
+    // Iniciar cámara al cargar la página
+    startCamera();
+
+    // Recibir mensajes y solicitudes de clientes
+    socket.on('receive_message', (data) => {
+      showAlert(`${data.sender}: ${data.text}`);
+    });
+
+    function showAlert(msg) {
+      alertText.textContent = msg;
+      alertBanner.style.display = 'block';
+      setTimeout(() => {
+        alertBanner.style.display = 'none';
+      }, 4000);
+    }
+  </script>
+
+</body>
+</html>
