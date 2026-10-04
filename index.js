@@ -109,4 +109,57 @@ application.post('/api/crear-pago', async (req, res) => {
         console.error('Error al crear la sesión de pago:', error);
         res.status(500).json({ error: 'No se pudo procesar el pago' });
     }
+});const express = require('express');
+const app = express();
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+app.use(express.json());
+app.use(express.static('.')); // Para que lea tu cliente.html
+
+// Ruta para crear la sesión de pago en Stripe
+app.post('/api/crear-pago', async (req, res) => {
+    try {
+        const { location, duration } = req.body;
+
+        // Definir precios según duración
+        let amount = 1800; // Por defecto 30 mins (US$ 18.00)
+        let durationText = "30 minutos";
+
+        if (duration === '15') {
+            amount = 1000; // US$ 10.00
+            durationText = "15 minutos";
+        } else if (duration === '60') {
+            amount = 3000; // US$ 30.00
+            durationText = "1 hora";
+        }
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: `Experiencia VeoLive: ${location}`,
+                        description: `Duración: ${durationText}`,
+                    },
+                    unit_amount: amount,
+                },
+                quantity: 1,
+            }],
+            mode: 'payment',
+            success_url: `${req.protocol}://${req.get('host')}/cliente.html?success=true`,
+            cancel_url: `${req.protocol}://${req.get('host')}/cliente.html?canceled=true`,
+        });
+
+        res.json({ url: session.url });
+    } catch (error) {
+        console.error('Error al crear la sesión de Stripe:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
 });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
+});
+
