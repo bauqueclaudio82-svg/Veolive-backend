@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeoLive - Transmisión (Cliente)</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #111; color: #fff; margin: 0; padding: 20px; }
+        video { width: 100%; max-width: 600px; border: 2px solid #444; border-radius: 8px; background: #000; }
+        button { padding: 12px 20px; font-size: 16px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; }
+        button:hover { background: #c0392b; }
+    </style>
+</head>
+<body>
+    <h1>VeoLive - Transmisor</h1>
+    <div>
+        <video id="localVideo" autoplay playsinline muted></video>
+    </div>
+    <div>
+        <button id="startBtn">Iniciar Transmisión</button>
+    </div>
+
+    <script>
+        const localVideo = document.getElementById('localVideo');
+        const startBtn = document.getElementById('startBtn');
+        let localStream;
+        let ws;
+
+        // Conectar al WebSocket (asume que corre en el mismo host/puerto o ajusta la URL)
+        function conectarWS() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            ws = new WebSocket(`${protocol}//${window.location.host}`);
+            
+            ws.onopen = () => console.log('Conectado al servidor de señalización');
+            ws.onmessage = async (event) => {
+                // Aquí manejaremos la señalización WebRTC en el siguiente ajuste si hace falta
+            };
+        }
+
+        startBtn.onclick = async () => {
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: true });
+                localVideo.srcObject = localStream;
+                conectarWS();
+                startBtn.disabled = true;
+                startBtn.textContent = "Transmitiendo...";
+            } catch (err) {
+                console.error("Error al acceder a la cámara:", err);
+                alert("No se pudo acceder a la cámara o micrófono.");
+            }
+        };
+    </script>
+</body>
+</html>
