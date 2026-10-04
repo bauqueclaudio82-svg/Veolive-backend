@@ -153,36 +153,16 @@
         }
     }
  </script>
- <script>
-    async function handleCustomBooking() {
-        const location = document.getElementById('customLocation').value;
-        const duration = document.getElementById('durationSelect').value;
+ 
+    
         
-        if (!location.trim()) {
-            alert('Por favor, ingresá una ciudad o lugar válido.');
-            return;
-        }
         
-        try {
-            const response = await fetch('/api/crear-pago', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ location, duration })
-            });
+        
+        
             
-            const data = await response.json();
+        
+        
+                
             
-            if (data.url) {
-                window.location.href = data.url; // Redirige a la pasarela de pago de Stripe
-            } else {
-                alert('Hubo un error al iniciar el pago. Intentalo de nuevo.');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Error de conexión con el servidor.');
-        }
-    }
- </script>
+        
 
