@@ -50,5 +50,40 @@
             }
         };
     </script>
+    <!-- Sección de Destino Personalizado -->
+<section style="padding: 40px 20px; background: #f8f9fa; text-align: center; border-radius: 12px; margin: 20px 0;">
+    <h2>🌍 ¿Querés explorar otro lugar del mundo?</h2>
+    <p style="color: #666; margin-bottom: 20px;">Elegí cualquier ciudad o rincón del planeta y conectate con un anfitrión local en vivo.</p>
+    
+    <div style="max-width: 400px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px;">
+        <input type="text" id="customLocation" placeholder="Ej: Tokio, Japón o Roma, Italia" style="padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px;">
+        
+        <select id="durationSelect" style="padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; background: white;">
+            <option value="15">15 minutos - US$ 10</option>
+            <option value="30" selected>30 minutos - US$ 18</option>
+            <option value="60">1 hora - US$ 30</option>
+        </select>
+        
+        <button onclick="handleCustomBooking()" style="background: #28a745; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
+            Reservar Destino a Medida 🔒
+        </button>
+    </div>
+</section>
+
+<script>
+    function handleCustomBooking() {
+        const location = document.getElementById('customLocation').value;
+        const duration = document.getElementById('durationSelect').value;
+        
+        if (!location.trim()) {
+            alert('Por favor, ingresá un lugar válido.');
+            return;
+        }
+        
+        alert('Redirigiendo al pago seguro para tu experiencia en: ' + location + ' (' + duration + ' min)...');
+    }
+</script>
+    
 </body>
+    
 </html>
