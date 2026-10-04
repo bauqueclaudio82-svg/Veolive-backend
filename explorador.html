@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeoLive - Visualizador (Explorador)</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background: #111; color: #fff; margin: 0; padding: 20px; }
+        video { width: 100%; max-width: 600px; border: 2px solid #444; border-radius: 8px; background: #000; }
+        #status { margin: 15px 0; font-size: 18px; color: #f1c40f; }
+    </style>
+</head>
+<body>
+    <h1>VeoLive - Espectador</h1>
+    <div id="status">Conectando al servidor...</div>
+    <div>
+        <video id="remoteVideo" autoplay playsinline controls></video>
+    </div>
+
+    <script>
+        const remoteVideo = document.getElementById('remoteVideo');
+        const statusDiv = document.getElementById('status');
+
+        function conectar() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+            ws.onopen = () => {
+                statusDiv.textContent = "Conectado. Esperando transmisión...";
+            };
+
+            ws.onmessage = async (event) => {
+                // Aquí recibiremos los datos de video/audio en los siguientes ajustes
+                statusDiv.textContent = "Recibiendo datos...";
+            };
+
+            ws.onclose = () => {
+                statusDiv.textContent = "Desconectado del servidor. Reconectando...";
+                setTimeout(conectar, 3000);
+            };
+        }
+
+        conectar();
+    </script>
+</body>
+</html>
