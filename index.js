@@ -65,7 +65,7 @@ app.get('/', async (req, res) => {
       dbTime: result.rows[0].now,
       status: 'Database tables ready'
     });
-  } catch (err) {
+  } catch (err) { 
     res.status(500).json({ error: err.message });
   }
 });
@@ -74,3 +74,39 @@ app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
 
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+// Ruta para crear la sesión de pago global
+application.post('/api/crear-pago', async (req, res) => {
+    try {
+        const { location, duration } = req.body;
+
+        // Definir precio según la duración seleccionada (en centavos de dólar)
+        let amount = 1800; // Por defecto 30 min (US$ 18.00)
+        if (duration === '15') amount = 1000;  // US$ 10.00
+        if (duration === '60') amount = 3000;  // US$ 30.00
+
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: `Experiencia en vivo: ${location}`,
+                        description: `Duración: ${duration} minutos`,
+                    },
+                    unit_amount: amount,
+                },
+                quantity: 1,
+            }],
+            mode: 'payment',
+            success_url: `https://${req.get('host')}/exito.html`,
+            cancel_url: `https://${req.get('host')}/cliente.html`,
+        });
+
+        res.json({ url: session.url });
+    } catch (error) {
+        console.error('Error al crear la sesión de pago:', error);
+        res.status(500).json({ error: 'No se pudo procesar el pago' });
+    }
+});
