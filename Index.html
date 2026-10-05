@@ -31,6 +31,12 @@
             color: var(--primary);
             text-decoration: none;
         }
+        .nav-links a {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 600;
+            margin-left: 1.5rem;
+        }
         .hero {
             padding: 2rem;
             text-align: center;
@@ -76,4 +82,183 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            color
+            color: var(--gray);
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .card-content {
+            padding: 1.2rem;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .location {
+            font-size: 0.9rem;
+            color: var(--gray);
+            font-weight: 600;
+        }
+        .rating {
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin: 0 0 0.5rem 0;
+        }
+        .description {
+            font-size: 0.9rem;
+            color: var(--gray);
+            line-height: 1.4;
+            margin-bottom: 1rem;
+        }
+        .footer-card {
+            padding: 1.2rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #FAFAFA;
+        }
+        .price {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--dark);
+        }
+        .btn-book {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-book:hover {
+            background: #e02b4c;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#" class="logo">VeoLive</a>
+        <div class="nav-links">
+            <a href="dashboard.html">Panel de Anfitrión</a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>VeoLive</h1>
+        <p>Experiencias turísticas en vivo, dirigidas por guías desde cualquier parte del mundo.</p>
+    </section>
+
+    <div class="container">
+        <div class="grid">
+
+            <!-- Torre Eiffel -->
+            <div class="card">
+                <div>
+                    <div class="card-img-placeholder">🗼 Torre Eiffel al atardecer</div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="location">Torre Eiffel • 30 min</span>
+                            <span class="rating">⭐ 4.9</span>
+                        </div>
+                        <h3 class="title">Torre Eiffel al atardecer</h3>
+                        <p class="description">Recorré la Torre Eiffel y sus alrededores en vivo con tu guía local.</p>
+                    </div>
+                </div>
+                <div class="footer-card">
+                    <span class="price">US$ 18.00</span>
+                    <!-- Llama a la función pasando el título, la duración en minutos ('30') y el ID del guía (ej: 1) -->
+                    <button class="btn-book" onclick="pagarExperiencia('Torre Eiffel al atardecer', '30', 1)">Reservar y pagar</button>
+                </div>
+            </div>
+
+            <!-- Tokio -->
+            <div class="card">
+                <div>
+                    <div class="card-img-placeholder">🏮 Mercado nocturno de Tokio</div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="location">Shinjuku • 60 min</span>
+                            <span class="rating">⭐ 4.8</span>
+                        </div>
+                        <h3 class="title">Mercado nocturno de Tokio</h3>
+                        <p class="description">Sumergite en los callejones iluminados de Tokio en tiempo real.</p>
+                    </div>
+                </div>
+                <div class="footer-card">
+                    <span class="price">US$ 30.00</span>
+                    <button class="btn-book" onclick="pagarExperiencia('Mercado nocturno de Tokio', '60', 2)">Reservar y pagar</button>
+                </div>
+            </div>
+
+            <!-- Buenos Aires -->
+            <div class="card">
+                <div>
+                    <div class="card-img-placeholder">💃 Ritmo y Color en La Boca</div>
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="location">Buenos Aires • 15 min</span>
+                            <span class="rating">⭐ 4.7</span>
+                        </div>
+                        <h3 class="title">Ritmo y Color en La Boca</h3>
+                        <p class="description">Recorré el histórico conventillo de Caminito y escuchá tango en directo.</p>
+                    </div>
+                </div>
+                <div class="footer-card">
+                    <span class="price">US$ 10.00</span>
+                    <button class="btn-book" onclick="pagarExperiencia('Ritmo y Color en La Boca', '15', 3)">Reservar y pagar</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Script que conecta con tu backend en Node.js (/api/crear-pago) -->
+    <script>
+        async function pagarExperiencia(location, duration, guideId) {
+            try {
+                const btn = event.target;
+                const originalText = btn.innerText;
+                btn.innerText = "Conectando con pago...";
+                btn.disabled = true;
+
+                const response = await fetch('/api/crear-pago', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        location: location,
+                        duration: duration,
+                        guide_id: guideId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Redirige al usuario de forma segura a la pasarela de Stripe generada por tu backend
+                    window.location.href = data.url;
+                } else {
+                    alert('Error: ' + (data.error || 'No se pudo iniciar el pago'));
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }
+
+            } catch (error) {
+                console.error('Error de red:', error);
+                alert('No se pudo conectar con el servidor.');
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
