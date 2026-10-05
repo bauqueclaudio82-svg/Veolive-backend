@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeoLive - Panel del Anfitrión</title>
+    <style>
+        :root {
+            --primary: #FF385C;
+            --dark: #222222;
+            --gray: #717171;
+            --light-gray: #F7F7F7;
+            --border: #E0E0E0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: #FAFAFA;
+            color: var(--dark);
+        }
+        header {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .status-badge {
+            font-size: 0.85rem;
+            color: #008A05;
+            background: #E6F4EA;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .welcome-box {
+            margin-bottom: 2rem;
+        }
+        .welcome-box h1 {
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        .welcome-box p {
+            color: var(--gray);
+            margin: 0.3rem 0 0 0;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        .metric-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .metric-card h3 {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .metric-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0 0 0;
+            color: var(--dark);
+        }
+        .metric-card .note {
+            font-size: 0.8rem;
+            color: #008A05;
+            margin-top: 0.3rem;
+        }
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            overflow-x: auto;
+        }
+        .tours-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+        .tours-table th, .tours-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .tours-table th {
+            background: var(--light-gray);
+            font-size: 0.85rem;
+            color: var(--gray);
+            text-transform: uppercase;
+        }
+        .tours-table tr:last-child td {
+            border-bottom: none;
+        }
+        .badge {
+            background: #E6F4EA;
+            color: #137333;
+            padding: 0.3rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="logo">VeoLive Anfitriones</a>
+        <div><span class="status-badge">🟢 Stripe Conectado</span></div>
+    </header>
+
+    <div class="container">
+        
+        <div class="welcome-box">
+            <h1>Hola, Anfitrión 👋</h1>
+            <p>Acá podés ver el resumen de tus transmisiones y tus ingresos netos en tiempo real (80% de cada experiencia).</p>
+        </div>
+
+        <!-- Métricas Principales -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <h3>Tus Ganancias (80%)</h3>
+                <p class="value" id="host-earnings">$ 340.00</p>
+                <p class="note">Listo para transferencia automática</p>
+            </div>
+            <div class="metric-card">
+                <h3>Experiencias Vendidas</h3>
+                <p class="value" id="total-tours">19</p>
+                <p class="note">Viajeros de todo el mundo</p>
+            </div>
+            <div class="metric-card">
+                <h3>Calificación Promedio</h3>
+                <p class="value">4.9 ⭐</p>
+                <p class="note">Basado en opiniones en vivo</p>
+            </div>
+        </div>
+
+        <!-- Tabla de Reservas Recientes -->
+        <div class="section-title">Últimas Experiencias Realizadas</div>
+        <div class="table-container">
+            <table class="tours-table">
+                <thead>
+                    <tr>
+                        <th>Experiencia</th>
+                        <th>Viajero (País de origen)</th>
+                        <th>Monto Total</th>
+                        <th>Tu 80%</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody id="bookings-list">
+                    <tr>
+                        <td>Torre Eiffel al atardecer</td>
+                        <td>Tokio, Japón</td>
+                        <td>US$ 15.00</td>
+                        <td><strong>US$ 12.00</strong></td>
+                        <td><span class="badge">Transferido</span></td>
+  
