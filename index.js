@@ -1,170 +1,236 @@
-
-
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
-
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
-const port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
+
+// ================================
+// CONFIGURACIÓN
+// ================================
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static('.'));
 
+// ================================
+// BASE DE DATOS
+// ================================
+
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false }
+connectionString: process.env.DATABASE_URL,
+ssl: {
+rejectUnauthorized: false
+}
 });
 
+// ================================
+// INICIALIZAR BASE DE DATOS
+// ================================
 
-// Función para inicializar las tablas de la base de datos
 const initDb = async () => {
-  const queryText = `
+
+const queryText = `
     CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      name VARCHAR(100) NOT NULL,
-      email VARCHAR(150) UNIQUE NOT NULL,
-      role VARCHAR(20) DEFAULT 'tourist',
-      stripe_account_id VARCHAR(100),
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(150) UNIQUE NOT NULL,
+        role VARCHAR(20) DEFAULT 'tourist',
+        stripe_account_id VARCHAR(100),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS tours (
-      id SERIAL PRIMARY KEY,
-      guide_id INT REFERENCES users(id),
-      title VARCHAR(200) NOT NULL,
-      description TEXT,
-      price DECIMAL(10, 2) NOT NULL,
-      scheduled_at TIMESTAMP NOT NULL,
-      status VARCHAR(20) DEFAULT 'scheduled',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        id SERIAL PRIMARY KEY,
+        guide_id INT REFERENCES users(id),
+        title VARCHAR(200) NOT NULL,
+        description TEXT,
+        price DECIMAL(10, 2) NOT NULL,
+        scheduled_at TIMESTAMP NOT NULL,
+        status VARCHAR(20) DEFAULT 'scheduled',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS bookings (
-      id SERIAL PRIMARY KEY,
-      tour_id INT REFERENCES tours(id),
-      tourist_id INT REFERENCES users(id),
-      stripe_payment_intent_id VARCHAR(100),
-      amount DECIMAL(10, 2) NOT NULL,
-      status VARCHAR(20) DEFAULT 'paid',
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        id SERIAL PRIMARY KEY,
+        tour_id INT REFERENCES tours(id),
+        tourist_id INT REFERENCES users(id),
+        stripe_payment_intent_id VARCHAR(100),
+        amount DECIMAL(10, 2) NOT NULL,
+        status VARCHAR(20) DEFAULT 'paid',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-  `;
-  try {
+`;
+
+try {
+
     await pool.query(queryText);
+
     console.log('Tablas inicializadas correctamente');
-  } catch (err) {
-    console.error('Error al crear tablas:', err.message);
-  }
+
+} catch (error) {
+
+    console.error(
+        'Error al crear las tablas:',
+        error.message
+    );
+
+}
+
 };
 
-// Inicializar tablas al arrancar
+// Ejecutar inicialización
 initDb();
 
+// ================================
+// RUTA PRINCIPAL
+// ================================
+
 app.get('/', async (req, res) => {
-  try {
+
+try {
+
     const result = await pool.query('SELECT NOW()');
-    res.json({ 
-      message: 'Veolive API running!', 
-      dbTime: result.rows[0].now,
-      status: 'Database tables ready'
+
+    res.json({
+        message: 'VeoLive API running!',
+        dbTime: result.rows[0].now,
+        status: 'Database tables ready'
     });
-  } catch (err) { 
-    res.status(500).json({ error: err.message });
-  }
+
+} catch (error) {
+
+    console.error(error);
+
+    res.status(500).json({
+        error: 'Error de conexión con la base de datos'
+    });
+
+}
+
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+// ================================
+// CREAR PAGO STRIPE
+// ================================
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+app.post('/api/crear-pago', async (req, res) => {
 
-// Ruta para crear la sesión de pago global
-application.post('/api/crear-pago', async (req, res) => {
-    try {
-        const { location, duration } = req.body;
+try {
 
-        // Definir precio según la duración seleccionada (en centavos de dólar)
-        let amount = 1800; // Por defecto 30 min (US$ 18.00)
-        if (duration === '15') amount = 1000;  // US$ 10.00
-        if (duration === '60') amount = 3000;  // US$ 30.00
+    const { location, duration } = req.body;
 
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: [{
-                price_data: {
-                    currency: 'usd',
-                    product_data: {
-                        name: `Experiencia en vivo: ${location}`,
-                        description: `Duración: ${duration} minutos`,
-                    },
-                    unit_amount: amount,
-                },
-                quantity: 1,
-            }],
-            mode: 'payment',
-            success_url: `https://${req.get('host')}/exito.html`,
-            cancel_url: `https://${req.get('host')}/cliente.html`,
+    // -------------------------------
+    // VALIDACIÓN
+    // -------------------------------
+
+    if (!location || !duration) {
+
+        return res.status(400).json({
+            error: 'Faltan datos de la experiencia'
         });
 
-        res.json({ url: session.url });
-    } catch (error) {
-        console.error('Error al crear la sesión de pago:', error);
-        res.status(500).json({ error: 'No se pudo procesar el pago' });
     }
-});const express = require('express');
-const app = express();
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
-app.use(express.json());
-app.use(express.static('.')); // Para que lea tu cliente.html
+    // -------------------------------
+    // PRECIOS
+    // -------------------------------
 
-// Ruta para crear la sesión de pago en Stripe
-app.post('/api/crear-pago', async (req, res) => {
-    try {
-        const { location, duration } = req.body;
+    let amount;
+    let durationText;
 
-        // Definir precios según duración
-        let amount = 1800; // Por defecto 30 mins (US$ 18.00)
-        let durationText = "30 minutos";
+    if (duration === '15') {
 
-        if (duration === '15') {
-            amount = 1000; // US$ 10.00
-            durationText = "15 minutos";
-        } else if (duration === '60') {
-            amount = 3000; // US$ 30.00
-            durationText = "1 hora";
-        }
+        amount = 1000;
+        durationText = '15 minutos';
 
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: [{
+    } else if (duration === '30') {
+
+        amount = 1800;
+        durationText = '30 minutos';
+
+    } else if (duration === '60') {
+
+        amount = 3000;
+        durationText = '1 hora';
+
+    } else {
+
+        return res.status(400).json({
+            error: 'Duración no válida'
+        });
+
+    }
+
+    // -------------------------------
+    // CREAR SESIÓN DE STRIPE
+    // -------------------------------
+
+    const session = await stripe.checkout.sessions.create({
+
+        payment_method_types: ['card'],
+
+        line_items: [
+            {
                 price_data: {
+
                     currency: 'usd',
+
                     product_data: {
                         name: `Experiencia VeoLive: ${location}`,
-                        description: `Duración: ${durationText}`,
+                        description: `Duración: ${durationText}`
                     },
-                    unit_amount: amount,
-                },
-                quantity: 1,
-            }],
-            mode: 'payment',
-            success_url: `${req.protocol}://${req.get('host')}/cliente.html?success=true`,
-            cancel_url: `${req.protocol}://${req.get('host')}/cliente.html?canceled=true`,
-        });
 
-        res.json({ url: session.url });
-    } catch (error) {
-        console.error('Error al crear la sesión de Stripe:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
+                    unit_amount: amount
+                },
+
+                quantity: 1
+            }
+        ],
+
+        mode: 'payment',
+
+        success_url:
+            `${req.protocol}://${req.get('host')}/cliente.html?success=true`,
+
+        cancel_url:
+            `${req.protocol}://${req.get('host')}/cliente.html?canceled=true`
+    });
+
+    // -------------------------------
+    // RESPUESTA
+    // -------------------------------
+
+    res.json({
+        success: true,
+        url: session.url
+    });
+
+} catch (error) {
+
+    console.error(
+        'Error al crear la sesión de Stripe:',
+        error
+    );
+
+    res.status(500).json({
+        error: 'No se pudo crear el pago'
+    });
+
+}
+
 });
 
-const PORT = process.env.PORT || 3000;
+// ================================
+// INICIAR SERVIDOR
+// ================================
+
 app.listen(PORT, () => {
-    console.log(`Servidor corriendo en el puerto ${PORT}`);
+
+console.log(
+    `Servidor VeoLive corriendo en el puerto ${PORT}`
+);
+
 });
 
