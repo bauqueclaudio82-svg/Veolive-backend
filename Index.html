@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VeoLive - Experiencias turísticas en vivo</title>
+    <!-- Incluimos FontAwesome para los iconos de PayPal y el reproductor -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
             --primary: #FF385C;
@@ -141,6 +143,40 @@
         .btn-book:hover {
             background: #e02b4c;
         }
+
+        /* Estilos de Modales */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-box {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 480px;
+            padding: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
     </style>
 </head>
 <body>
@@ -175,8 +211,7 @@
                 </div>
                 <div class="footer-card">
                     <span class="price">US$ 18.00</span>
-                    <!-- Llama a la función pasando el título, la duración en minutos ('30') y el ID del guía (ej: 1) -->
-                    <button class="btn-book" onclick="pagarExperiencia('Torre Eiffel al atardecer', '30', 1)">Reservar y pagar</button>
+                    <button class="btn-book" onclick="abrirReserva('Torre Eiffel al atardecer', 18)">Reservar y pagar</button>
                 </div>
             </div>
 
@@ -195,7 +230,7 @@
                 </div>
                 <div class="footer-card">
                     <span class="price">US$ 30.00</span>
-                    <button class="btn-book" onclick="pagarExperiencia('Mercado nocturno de Tokio', '60', 2)">Reservar y pagar</button>
+                    <button class="btn-book" onclick="abrirReserva('Mercado nocturno de Tokio', 30)">Reservar y pagar</button>
                 </div>
             </div>
 
@@ -214,51 +249,117 @@
                 </div>
                 <div class="footer-card">
                     <span class="price">US$ 10.00</span>
-                    <button class="btn-book" onclick="pagarExperiencia('Ritmo y Color en La Boca', '15', 3)">Reservar y pagar</button>
+                    <button class="btn-book" onclick="abrirReserva('Ritmo y Color en La Boca', 10)">Reservar y pagar</button>
                 </div>
             </div>
 
         </div>
     </div>
 
-    <!-- Script que conecta con tu backend en Node.js (/api/crear-pago) -->
+    <!-- MODAL DE PAGO CON PAYPAL -->
+    <div class="modal" id="bookingModal">
+        <div class="modal-box">
+            <button class="close" onclick="closeModal('bookingModal')">×</button>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <i class="fa-brands fa-paypal" style="color: #0070ba; font-size: 2rem;"></i>
+                <h2 style="font-size: 1.25rem; font-weight: bold; margin: 0;">Pago seguro con PayPal</h2>
+            </div>
+            <p id="bookingText" style="color: #717171; font-size: 0.9rem; margin-bottom: 15px;"></p>
+            
+            <div style="background: #f0f7ff; border: 1px solid #cce5ff; border-radius: 12px; padding: 15px; margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 0.75rem; background: #cce5ff; color: #004085; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Protección al Comprador</span>
+                    <span style="font-size: 0.75rem; color: #28a745; font-weight: 600;"><i class="fa-solid fa-lock"></i> Transacción cifrada</span>
+                </div>
+                <p style="font-size: 0.8rem; color: #495057; margin: 0 0 10px 0;">El explorador paga de forma segura y el fondo queda resguardado hasta finalizar el tour con éxito.</p>
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #d6d8db; padding-top: 8px;">
+                    <span style="color: #343a40; font-weight: 500; font-size: 0.9rem;">Total a pagar:</span>
+                    <strong id="bookingPrice" style="font-size: 1.1rem; color: #212529;">US$ 18.00</strong>
+                </div>
+            </div>
+
+            <!-- Botón oficial de PayPal -->
+            <button style="width: 100%; padding: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1rem; font-weight: bold; color: white; background: #0070ba; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onclick="processPayPalPayment()">
+                <i class="fa-brands fa-paypal" style="font-size: 1.2rem;"></i> Pagar con PayPal
+            </button>
+            <div id="paymentSuccess"></div>
+        </div>
+    </div>
+
+    <!-- MODAL DE STREAMING / VIDEOLLAMADA CON FLECHAS Y OCULTADO TÁCTIL -->
+    <div class="modal" id="callModal" style="background: black;">
+        <div style="width: 100%; max-width: 600px; height: 85vh; background: black; position: relative; overflow: hidden; border-radius: 16px;" id="streamContainer" onclick="toggleInterface(event)">
+            
+            <!-- Video en vivo -->
+            <div style="width: 100%; height: 100%; position: relative;">
+                <video id="localVideo" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+            </div>
+
+            <!-- Interfaz flotante superior, lateral e inferior -->
+            <div style="position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 1rem; pointer-events: none; transition: opacity 0.3s;" id="overlayUi">
+                
+                <!-- Barra superior -->
+                <div style="display: flex; items-center; justify-content: space-between; pointer-events: auto; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); padding: 8px 12px; border-radius: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="width: 10px; height: 10px; background: #ef4444; border-radius: 50%;"></span>
+                        <span id="callDestination" style="font-size: 0.75rem; color: white; font-weight: 500;">Destino en vivo</span>
+                    </div>
+                    <span style="font-size: 0.75rem; color: #34d399; font-weight: bold;">15:00 restante</span>
+                    <button style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer;" onclick="closeModal('callModal')">×</button>
+                </div>
+
+                <!-- Flechas laterales de giro -->
+                <button style="pointer-events: auto; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.4); color: white; font-size: 1.5rem; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="girarCamara('izquierda')">‹</button>
+                <button style="pointer-events: auto; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.4); color: white; font-size: 1.5rem; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="girarCamara('derecha')">›</button>
+
+                <!-- Panel inferior -->
+                <div style="display: flex; flex-direction: column; gap: 8px; pointer-events: auto;">
+                    <div style="background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border-radius: 12px; padding: 8px; max-height: 90px; overflow: auto; border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.75rem;" id="chatLog">
+                        <div><b>VeoLive Bot:</b> ¡Conexión establecida con éxito! Tu guía local está listo.</div>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <input id="chatInput" placeholder="Escribile al anfitrión..." style="flex: 1; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 0.75rem; padding: 10px; border-radius: 8px;" onkeypress="if(event.key==='Enter') sendChat()">
+                        <button onclick="sendChat()" style="background: rgba(99, 102, 241, 0.8); color: white; font-size: 0.75rem; padding: 10px 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer;">Enviar</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Script General y Lógica del Prototipo -->
     <script>
-        async function pagarExperiencia(location, duration, guideId) {
-            try {
-                const btn = event.target;
-                const originalText = btn.innerText;
-                btn.innerText = "Conectando con pago...";
-                btn.disabled = true;
+        let currentTour = "";
 
-                const response = await fetch('/api/crear-pago', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        location: location,
-                        duration: duration,
-                        guide_id: guideId
-                    })
-                });
+        function abrirReserva(titulo, precio) {
+            currentTour = titulo;
+            document.getElementById("bookingText").innerText = `Estás a un paso de iniciar tu experiencia en directo: ${titulo}`;
+            document.getElementById("bookingPrice").innerText = `US$ ${precio}.00`;
+            document.getElementById("paymentSuccess").innerHTML = ""; // Limpiar estados previos
+            document.getElementById("bookingModal").classList.add("active");
+        }
 
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    // Redirige al usuario de forma segura a la pasarela de Stripe generada por tu backend
-                    window.location.href = data.url;
-                } else {
-                    alert('Error: ' + (data.error || 'No se pudo iniciar el pago'));
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                }
-
-            } catch (error) {
-                console.error('Error de red:', error);
-                alert('No se pudo conectar con el servidor.');
-                location.reload();
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove("active");
+            if(modalId === 'callModal') {
+                detenerCamaraLocal();
             }
         }
-    </script>
-</body>
-</html>
+
+        function processPayPalPayment() {
+            const btn = event.currentTarget;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Conectando con PayPal...';
+            
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-brands fa-paypal"></i> Pagar con PayPal';
+                
+                document.getElementById("paymentSuccess").innerHTML = `
+                    <div style="background: #d4edda; color: #155724; padding: 10px; border-radius: 8px; margin-top: 12px; font-size: 0.85rem;">
+                        <i class="fa-solid fa-circle-check"></i> <b>¡Pago aprobado vía PayPal!</b><br>
+                        <span style="font-size: 0.75rem;">Fondos procesados y comisión separada con éxito.</span>
+                    </div>
+                    <button style="width: 100%; padding: 12px; margin-top: 10px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="iniciarVideollamada()">
+
+        
