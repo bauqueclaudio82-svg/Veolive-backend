@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VeoLive - Experiencias turísticas en vivo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Leaflet CSS para el mapa -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -14,7 +13,6 @@
             --gray: #717171;
             --light-gray: #F7F7F7;
             --border: #E0E0E0;
-            --map-red: #FF385C;
         }
         * {
             box-sizing: border-box;
@@ -60,7 +58,6 @@
             font-size: 1.1rem;
             margin: 0;
         }
-        /* === SECCIÓN DEL MAPA === */
         .map-section {
             max-width: 1200px;
             margin: 2rem auto;
@@ -97,7 +94,6 @@
             color: var(--primary);
             margin-bottom: 0.25rem;
         }
-        /* === Tarjetas y resto de estilos === */
         .container {
             max-width: 1200px;
             margin: 2rem auto;
@@ -170,7 +166,7 @@
             background: #FAFAFA;
         }
         .price {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: bold;
             color: var(--dark);
         }
@@ -178,16 +174,25 @@
             background: var(--primary);
             color: white;
             border: none;
-            padding: 0.6rem 1.2rem;
+            padding: 0.55rem 0.9rem;
             border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
             transition: background 0.2s;
             text-decoration: none;
             display: inline-block;
+            font-size: 0.85rem;
         }
         .btn-book:hover {
             background: #e02b4c;
+        }
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            margin-left: 8px;
+        }
+        .btn-secondary:hover {
+            background: #e0e0e0;
         }
         .modal {
             display: none;
@@ -224,6 +229,25 @@
         .hidden-card {
             display: none;
         }
+        .payment-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        @media (max-width: 480px) {
+            .footer-card {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .payment-options {
+                width: 100%;
+            }
+            .btn-book {
+                width: 100%;
+                text-align: center;
+                margin-left: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -240,7 +264,6 @@
         <p>Explorá el mapa y conectá con guías locales en cualquier parte del mundo 🌍</p>
     </section>
 
-    <!-- 🗺️ MAPA INTERACTIVO -->
     <section class="map-section">
         <h2>🌍 ¿A dónde querés viajar hoy?</h2>
         <p>Tocá un punto rojo para ver las experiencias disponibles en ese destino</p>
@@ -251,7 +274,6 @@
         </div>
     </section>
 
-    <!-- 📋 Experiencias disponibles -->
     <div class="container">
         <h2 id="experiencesTitle">✨ Experiencias disponibles</h2>
         <div class="grid" id="experiencesGrid">
@@ -271,7 +293,14 @@
                 </div>
                 <div class="footer-card">
                     <span class="price">US$ 18.00</span>
-                    <a href="https://www.paypal.me/TUUSUARIO/18" target="_blank" class="btn-book">Reservar y pagar</a>
+                    <div class="payment-options">
+                        <a href="https://www.paypal.me/CBauque/18" target="_blank" class="btn-book">
+                            <i class="fa-brands fa-paypal"></i> Con tarjeta
+                        </a>
+                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago(18)">
+                            💵 Takenos
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -290,11 +319,18 @@
                 </div>
                 <div class="footer-card">
                     <span class="price">US$ 30.00</span>
-                    <a href="https://www.paypal.me/TUUSUARIO/30" target="_blank" class="btn-book">Reservar y pagar</a>
+                    <div class="payment-options">
+                        <a href="https://www.paypal.me/CBauque/30" target="_blank" class="btn-book">
+                            <i class="fa-brands fa-paypal"></i> Con tarjeta
+                        </a>
+                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago(30)">
+                            💵 Takenos
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- 🇦🇺 BUENOS AIRES -->
+            <!-- 🇦🇷 BUENOS AIRES -->
             <div class="card" data-location="buenosaires">
                 <div>
                     <img src="https://images.unsplash.com/photo-1598679258474-4d4120c2d7a5?w=600&h=400&fit=crop" alt="La Boca Buenos Aires" class="card-image">
@@ -309,11 +345,18 @@
                 </div>
                 <div class="footer-card">
                     <span class="price">US$ 10.00</span>
-                    <a href="https://www.paypal.me/TUUSUARIO/10" target="_blank" class="btn-book">Reservar y pagar</a>
+                    <div class="payment-options">
+                        <a href="https://www.paypal.me/CBauque/10" target="_blank" class="btn-book">
+                            <i class="fa-brands fa-paypal"></i> Con tarjeta
+                        </a>
+                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago(10)">
+                            💵 Takenos
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- 🇪🇸 NUEVA YORK - Ejemplo extra -->
+            <!-- 🇺🇸 NUEVA YORK -->
             <div class="card hidden-card" data-location="nuevayork">
                 <div>
                     <img src="https://images.unsplash.com/photo-1496442226666-8d4d0e49e6a6?w=600&h=400&fit=crop" alt="Nueva York de noche" class="card-image">
@@ -328,11 +371,18 @@
                 </div>
                 <div class="footer-card">
                     <span class="price">US$ 25.00</span>
-                    <a href="https://www.paypal.me/TUUSUARIO/25" target="_blank" class="btn-book">Reservar y pagar</a>
+                    <div class="payment-options">
+                        <a href="https://www.paypal.me/CBauque/25" target="_blank" class="btn-book">
+                            <i class="fa-brands fa-paypal"></i> Con tarjeta
+                        </a>
+                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago(25)">
+                            💵 Takenos
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- 🇧🇷 RÍO DE JANEIRO - Ejemplo extra -->
+            <!-- 🇧🇷 RÍO DE JANEIRO -->
             <div class="card hidden-card" data-location="rio">
                 <div>
                     <img src="https://images.unsplash.com/photo-1483729558449-822cdb692904?w=600&h=400&fit=crop" alt="Río de Janeiro" class="card-image">
@@ -347,60 +397,64 @@
                 </div>
                 <div class="footer-card">
                     <span class="price">US$ 22.00</span>
-                    <a href="https://www.paypal.me/TUUSUARIO/22" target="_blank" class="btn-book">Reservar y pagar</a>
+                    <div class="payment-options">
+                        <a href="https://www.paypal.me/CBauque/22" target="_blank" class="btn-book">
+                            <i class="fa-brands fa-paypal"></i> Con tarjeta
+                        </a>
+                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago(22)">
+                            💵 Takenos
+                        </button>
+                    </div>
                 </div>
             </div>
 
         </div>
     </div>
 
-    <!-- Leaflet JS -->
+    <!-- MODAL: Datos de Takenos -->
+    <div class="modal" id="pagoModal">
+        <div class="modal-box">
+            <button class="close" onclick="closeModal('pagoModal')">×</button>
+            <h3 style="font-size: 1.2rem; margin-bottom: 1rem;">💵 Pago por Takenos</h3>
+            <p style="color: #717171; font-size: 0.9rem; margin-bottom: 1.2rem;">Enviá el monto a mi cuenta de Takenos:</p>
+
+            <div style="padding: 16px; background: #f8f9fa; border-radius: 10px; border: 1px solid #e9ecef; margin-bottom: 16px;">
+                <div style="font-weight: bold; margin-bottom: 8px;">Mi usuario de Takenos:</div>
+                <div style="background: white; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 1rem; text-align: center; color: #FF385C; font-weight: bold;">
+                    @bauqueclaudio82
+                </div>
+                <div style="margin-top: 10px; font-size: 0.9rem;">
+                    <strong>Monto:</strong> <span id="montoTakenos">US$ 0.00</span>
+                </div>
+            </div>
+
+            <div style="background: #fff3cd; border-radius: 8px; padding: 12px; font-size: 0.85rem; color: #856404; line-height: 1.5;">
+                ✅ <strong>Después de pagar:</strong> Enviame un mensaje con el comprobante y te doy acceso a tu experiencia en vivo.<br><br>
+                📧 Contacto: bauqueclaudio82@gmail.com
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // 🗺️ INICIALIZAR EL MAPA
-        const map = L.map('map').setView([15, 0], 2); // Vista centrada en el mundo
+        // Inicializar mapa
+        const map = L.map('map').setView([15, 0], 2);
 
-        // Capa de mapa (OpenStreetMap)
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© VeoLive | Datos: OpenStreetMap',
             maxZoom: 18
         }).addTo(map);
 
-        // 📍 PUNTOS ROJOS - Anfitriones activos en el mundo
+        // Puntos en el mapa
         const locations = [
-            { 
-                id: 'paris', 
-                name: '🇫🇷 París, Francia', 
-                desc: '1 experiencia disponible — Torre Eiffel y alrededores',
-                lat: 48.8584, lng: 2.2945 
-            },
-            { 
-                id: 'tokio', 
-                name: '🇯🇵 Tokio, Japón', 
-                desc: '1 experiencia disponible — Mercado nocturno de Shinjuku',
-                lat: 35.6762, lng: 139.6503 
-            },
-            { 
-                id: 'buenosaires', 
-                name: '🇦🇷 Buenos Aires, Argentina', 
-                desc: '1 experiencia disponible — Caminito, La Boca',
-                lat: -34.6037, lng: -58.3816 
-            },
-            { 
-                id: 'nuevayork', 
-                name: '🇺🇸 Nueva York, EE. UU.', 
-                desc: '1 experiencia disponible — Times Square de noche',
-                lat: 40.7128, lng: -74.0060 
-            },
-            { 
-                id: 'rio', 
-                name: '🇧🇷 Río de Janeiro, Brasil', 
-                desc: '1 experiencia disponible — Cristo Redentor y Copacabana',
-                lat: -22.9068, lng: -43.1729 
-            }
+            { id: 'paris', name: '🇫🇷 París, Francia', desc: '1 experiencia disponible — Torre Eiffel y alrededores', lat: 48.8584, lng: 2.2945 },
+            { id: 'tokio', name: '🇯🇵 Tokio, Japón', desc: '1 experiencia disponible — Mercado nocturno de Shinjuku', lat: 35.6762, lng: 139.6503 },
+            { id: 'buenosaires', name: '🇦🇷 Buenos Aires, Argentina', desc: '1 experiencia disponible — Caminito, La Boca', lat: -34.6037, lng: -58.3816 },
+            { id: 'nuevayork', name: '🇺🇸 Nueva York, EE. UU.', desc: '1 experiencia disponible — Times Square de noche', lat: 40.7128, lng: -74.0060 },
+            { id: 'rio', name: '🇧🇷 Río de Janeiro, Brasil', desc: '1 experiencia disponible — Cristo Redentor y Copacabana', lat: -22.9068, lng: -43.1729 }
         ];
 
-        // 🔴 Crear marcador rojo personalizado
+        // Marcador rojo
         const redIcon = L.divIcon({
             className: 'custom-marker',
             html: `<div style="width: 14px; height: 14px; background: #FF385C; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.4);"></div>`,
@@ -408,33 +462,40 @@
             iconAnchor: [7, 7]
         });
 
-        // Agregar cada punto al mapa
         locations.forEach(loc => {
             const marker = L.marker([loc.lat, loc.lng], { icon: redIcon }).addTo(map);
             marker.on('click', () => showLocation(loc));
         });
 
-        // 📌 Mostrar experiencias del destino seleccionado
         function showLocation(loc) {
-            // Actualizar el texto de selección
             document.getElementById('selectedLocation').classList.add('show');
             document.getElementById('locName').textContent = loc.name;
             document.getElementById('locDesc').textContent = loc.desc;
 
-            // Ocultar todas las tarjetas
             const allCards = document.querySelectorAll('.card');
             allCards.forEach(card => card.style.display = 'none');
 
-            // Mostrar solo la tarjeta seleccionada
             const selectedCard = document.querySelector(`.card[data-location="${loc.id}"]`);
             if (selectedCard) selectedCard.style.display = 'flex';
 
-            // Cambiar título
             document.getElementById('experiencesTitle').textContent = `📍 Experiencias en ${loc.name.split(',')[0].slice(2)}`;
-
-            // Scroll suave hacia las tarjetas
             document.getElementById('experiencesTitle').scrollIntoView({ behavior: 'smooth' });
         }
+
+        // Funciones del modal de pago
+        function mostrarOpcionesPago(precio) {
+            document.getElementById('montoTakenos').textContent = `US$ ${precio}.00`;
+            document.getElementById('pagoModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('pagoModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal('pagoModal');
+        });
     </script>
 </body>
 </html>
