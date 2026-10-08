@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VeoLive - Experiencias turísticas en vivo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet CSS para el mapa -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
             --primary: #FF385C;
@@ -12,6 +14,7 @@
             --gray: #717171;
             --light-gray: #F7F7F7;
             --border: #E0E0E0;
+            --map-red: #FF385C;
         }
         * {
             box-sizing: border-box;
@@ -57,10 +60,53 @@
             font-size: 1.1rem;
             margin: 0;
         }
+        /* === SECCIÓN DEL MAPA === */
+        .map-section {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .map-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        .map-section p {
+            text-align: center;
+            color: var(--gray);
+            margin-bottom: 1rem;
+        }
+        #map {
+            height: 450px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+        }
+        .selected-location {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+        }
+        .selected-location.show {
+            display: block;
+        }
+        .selected-location h3 {
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+        /* === Tarjetas y resto de estilos === */
         .container {
             max-width: 1200px;
             margin: 2rem auto;
             padding: 0 1rem;
+        }
+        .container h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
         }
         .grid {
             display: grid;
@@ -80,16 +126,6 @@
         .card:hover {
             transform: translateY(-4px);
             box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-        }
-        .card-img-placeholder {
-            background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
-            height: 180px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--gray);
-            font-weight: bold;
-            font-size: 1.1rem;
         }
         .card-image {
             width: 100%;
@@ -147,6 +183,8 @@
             font-weight: bold;
             cursor: pointer;
             transition: background 0.2s;
+            text-decoration: none;
+            display: inline-block;
         }
         .btn-book:hover {
             background: #e02b4c;
@@ -183,6 +221,9 @@
             cursor: pointer;
             color: var(--gray);
         }
+        .hidden-card {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -196,18 +237,32 @@
 
     <section class="hero">
         <h1>VeoLive</h1>
-        <p>Experiencias turísticas en vivo, dirigidas por guías desde cualquier parte del mundo.</p>
+        <p>Explorá el mapa y conectá con guías locales en cualquier parte del mundo 🌍</p>
     </section>
 
-    <div class="container">
-        <div class="grid">
+    <!-- 🗺️ MAPA INTERACTIVO -->
+    <section class="map-section">
+        <h2>🌍 ¿A dónde querés viajar hoy?</h2>
+        <p>Tocá un punto rojo para ver las experiencias disponibles en ese destino</p>
+        <div id="map"></div>
+        <div class="selected-location" id="selectedLocation">
+            <h3 id="locName"></h3>
+            <p id="locDesc"></p>
+        </div>
+    </section>
 
-            <div class="card">
+    <!-- 📋 Experiencias disponibles -->
+    <div class="container">
+        <h2 id="experiencesTitle">✨ Experiencias disponibles</h2>
+        <div class="grid" id="experiencesGrid">
+
+            <!-- 🇫🇷 PARÍS -->
+            <div class="card" data-location="paris">
                 <div>
                     <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&h=400&fit=crop" alt="Torre Eiffel al atardecer" class="card-image">
                     <div class="card-content">
                         <div class="card-header">
-                            <span class="location">París • 30 min</span>
+                            <span class="location">🇫🇷 París • 30 min</span>
                             <span class="rating">⭐ 4.9</span>
                         </div>
                         <h3 class="title">Torre Eiffel al atardecer</h3>
@@ -216,16 +271,17 @@
                 </div>
                 <div class="footer-card">
                     <span class="price">US$ 18.00</span>
-                    <button class="btn-book" onclick="abrirReserva('Torre Eiffel al atardecer', 18)">Reservar y pagar</button>
+                    <a href="https://www.paypal.me/TUUSUARIO/18" target="_blank" class="btn-book">Reservar y pagar</a>
                 </div>
             </div>
 
-            <div class="card">
+            <!-- 🇯🇵 TOKIO -->
+            <div class="card" data-location="tokio">
                 <div>
                     <img src="https://images.unsplash.com/photo-1540957623405-16700f7c468b?w=600&h=400&fit=crop" alt="Mercado nocturno de Tokio" class="card-image">
                     <div class="card-content">
                         <div class="card-header">
-                            <span class="location">Shinjuku • 60 min</span>
+                            <span class="location">🇯🇵 Tokio • 60 min</span>
                             <span class="rating">⭐ 4.8</span>
                         </div>
                         <h3 class="title">Mercado nocturno de Tokio</h3>
@@ -234,185 +290,150 @@
                 </div>
                 <div class="footer-card">
                     <span class="price">US$ 30.00</span>
-                    <button class="btn-book" onclick="abrirReserva('Mercado nocturno de Tokio', 30)">Reservar y pagar</button>
+                    <a href="https://www.paypal.me/TUUSUARIO/30" target="_blank" class="btn-book">Reservar y pagar</a>
                 </div>
             </div>
 
-            <div class="card">
+            <!-- 🇦🇺 BUENOS AIRES -->
+            <div class="card" data-location="buenosaires">
                 <div>
                     <img src="https://images.unsplash.com/photo-1598679258474-4d4120c2d7a5?w=600&h=400&fit=crop" alt="La Boca Buenos Aires" class="card-image">
                     <div class="card-content">
                         <div class="card-header">
-                            <span class="location">Buenos Aires • 15 min</span>
+                            <span class="location">🇦🇷 Buenos Aires • 15 min</span>
                             <span class="rating">⭐ 4.7</span>
                         </div>
                         <h3 class="title">Ritmo y Color en La Boca</h3>
-                        <p class="description">Recorré el histórico conventillo de Caminito y escuchá tango en directo.</p>
+                        <p class="description">Recorré el histórico Caminito y escuchá tango en directo.</p>
                     </div>
                 </div>
                 <div class="footer-card">
                     <span class="price">US$ 10.00</span>
-                    <button class="btn-book" onclick="abrirReserva('Ritmo y Color en La Boca', 10)">Reservar y pagar</button>
+                    <a href="https://www.paypal.me/TUUSUARIO/10" target="_blank" class="btn-book">Reservar y pagar</a>
+                </div>
+            </div>
+
+            <!-- 🇪🇸 NUEVA YORK - Ejemplo extra -->
+            <div class="card hidden-card" data-location="nuevayork">
+                <div>
+                    <img src="https://images.unsplash.com/photo-1496442226666-8d4d0e49e6a6?w=600&h=400&fit=crop" alt="Nueva York de noche" class="card-image">
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="location">🇺🇸 Nueva York • 45 min</span>
+                            <span class="rating">⭐ 4.9</span>
+                        </div>
+                        <h3 class="title">Luces de Times Square</h3>
+                        <p class="description">Viví el brillo de Times Square con un guía neoyorquino.</p>
+                    </div>
+                </div>
+                <div class="footer-card">
+                    <span class="price">US$ 25.00</span>
+                    <a href="https://www.paypal.me/TUUSUARIO/25" target="_blank" class="btn-book">Reservar y pagar</a>
+                </div>
+            </div>
+
+            <!-- 🇧🇷 RÍO DE JANEIRO - Ejemplo extra -->
+            <div class="card hidden-card" data-location="rio">
+                <div>
+                    <img src="https://images.unsplash.com/photo-1483729558449-822cdb692904?w=600&h=400&fit=crop" alt="Río de Janeiro" class="card-image">
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="location">🇧🇷 Río de Janeiro • 40 min</span>
+                            <span class="rating">⭐ 4.8</span>
+                        </div>
+                        <h3 class="title">El Cristo y Copacabana</h3>
+                        <p class="description">Panorámica espectacular del Cerro del Corcovado y la playa.</p>
+                    </div>
+                </div>
+                <div class="footer-card">
+                    <span class="price">US$ 22.00</span>
+                    <a href="https://www.paypal.me/TUUSUARIO/22" target="_blank" class="btn-book">Reservar y pagar</a>
                 </div>
             </div>
 
         </div>
     </div>
 
-    <!-- MODAL DE PAGO CON PAYPAL -->
-    <div class="modal" id="bookingModal">
-        <div class="modal-box">
-            <button class="close" onclick="closeModal('bookingModal')">×</button>
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                <i class="fa-brands fa-paypal" style="color: #0070ba; font-size: 2rem;"></i>
-                <h2 style="font-size: 1.25rem; font-weight: bold; margin: 0;">Pago seguro con PayPal</h2>
-            </div>
-            <p id="bookingText" style="color: #717171; font-size: 0.9rem; margin-bottom: 15px;"></p>
-            
-            <div style="background: #f0f7ff; border: 1px solid #cce5ff; border-radius: 12px; padding: 15px; margin-bottom: 15px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <span style="font-size: 0.75rem; background: #cce5ff; color: #004085; padding: 2px 6px; border-radius: 4px; font-weight: bold;">Protección al Comprador</span>
-                    <span style="font-size: 0.75rem; color: #28a745; font-weight: 600;"><i class="fa-solid fa-lock"></i> Transacción cifrada</span>
-                </div>
-                <p style="font-size: 0.8rem; color: #495057; margin: 0 0 10px 0;">El explorador paga de forma segura y el fondo queda resguardado hasta finalizar el tour con éxito.</p>
-                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #d6d8db; padding-top: 8px;">
-                    <span style="color: #343a40; font-weight: 500; font-size: 0.9rem;">Total a pagar:</span>
-                    <strong id="bookingPrice" style="font-size: 1.1rem; color: #212529;">US$ 18.00</strong>
-                </div>
-            </div>
-
-            <button id="paypalBtn" style="width: 100%; padding: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 1rem; font-weight: bold; color: white; background: #0070ba; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1);" onclick="processPayPalPayment()">
-                <i class="fa-brands fa-paypal" style="font-size: 1.2rem;"></i> Pagar con PayPal
-            </button>
-            <div id="paymentSuccess"></div>
-        </div>
-    </div>
-
-    <!-- MODAL DE VIDEOLLAMADA -->
-    <div class="modal" id="callModal" style="background: black;">
-        <div style="width: 100%; max-width: 600px; height: 85vh; background: black; position: relative; overflow: hidden; border-radius: 16px;" id="streamContainer" onclick="toggleInterface(event)">
-            
-            <div style="width: 100%; height: 100%; position: relative;">
-                <video id="localVideo" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
-            </div>
-
-            <div style="position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 1rem; pointer-events: none; transition: opacity 0.3s;" id="overlayUi">
-                
-                <div style="display: flex; align-items: center; justify-content: space-between; pointer-events: auto; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); padding: 8px 12px; border-radius: 12px;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                        <span style="width: 10px; height: 10px; background: #ef4444; border-radius: 50%;"></span>
-                        <span id="callDestination" style="font-size: 0.75rem; color: white; font-weight: 500;">Destino en vivo</span>
-                    </div>
-                    <span style="font-size: 0.75rem; color: #34d399; font-weight: bold;">15:00 restante</span>
-                    <button style="background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer;" onclick="closeModal('callModal')">×</button>
-                </div>
-
-                <button style="pointer-events: auto; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.4); color: white; font-size: 1.5rem; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="girarCamara('izquierda')">‹</button>
-                <button style="pointer-events: auto; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.4); color: white; font-size: 1.5rem; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="girarCamara('derecha')">›</button>
-
-                <div style="display: flex; flex-direction: column; gap: 8px; pointer-events: auto;">
-                    <div style="background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); border-radius: 12px; padding: 8px; max-height: 90px; overflow: auto; border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 0.75rem;" id="chatLog">
-                        <div><b>VeoLive Sistema:</b> ¡Conexión establecida con éxito! Tu guía local está listo.</div>
-                    </div>
-                    <div style="display: flex; gap: 8px;">
-                        <input id="chatInput" placeholder="Escribile al anfitrión..." style="flex: 1; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.2); color: white; font-size: 0.75rem; padding: 10px; border-radius: 8px;" onkeypress="if(event.key==='Enter') sendChat()">
-                        <button onclick="sendChat()" style="background: rgba(99, 102, 241, 0.8); color: white; font-size: 0.75rem; padding: 10px 14px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer;">Enviar</button>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        let currentTour = "";
+        // 🗺️ INICIALIZAR EL MAPA
+        const map = L.map('map').setView([15, 0], 2); // Vista centrada en el mundo
 
-        function abrirReserva(titulo, precio) {
-            currentTour = titulo;
-            document.getElementById("bookingText").innerText = `Estás a un paso de iniciar tu experiencia en directo: ${titulo}`;
-            document.getElementById("bookingPrice").innerText = `US$ ${precio}.00`;
-            document.getElementById("paymentSuccess").innerHTML = "";
-            document.getElementById("bookingModal").classList.add("active");
-        }
+        // Capa de mapa (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© VeoLive | Datos: OpenStreetMap',
+            maxZoom: 18
+        }).addTo(map);
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove("active");
-            if(modalId === 'callModal') {
-                detenerCamaraLocal();
+        // 📍 PUNTOS ROJOS - Anfitriones activos en el mundo
+        const locations = [
+            { 
+                id: 'paris', 
+                name: '🇫🇷 París, Francia', 
+                desc: '1 experiencia disponible — Torre Eiffel y alrededores',
+                lat: 48.8584, lng: 2.2945 
+            },
+            { 
+                id: 'tokio', 
+                name: '🇯🇵 Tokio, Japón', 
+                desc: '1 experiencia disponible — Mercado nocturno de Shinjuku',
+                lat: 35.6762, lng: 139.6503 
+            },
+            { 
+                id: 'buenosaires', 
+                name: '🇦🇷 Buenos Aires, Argentina', 
+                desc: '1 experiencia disponible — Caminito, La Boca',
+                lat: -34.6037, lng: -58.3816 
+            },
+            { 
+                id: 'nuevayork', 
+                name: '🇺🇸 Nueva York, EE. UU.', 
+                desc: '1 experiencia disponible — Times Square de noche',
+                lat: 40.7128, lng: -74.0060 
+            },
+            { 
+                id: 'rio', 
+                name: '🇧🇷 Río de Janeiro, Brasil', 
+                desc: '1 experiencia disponible — Cristo Redentor y Copacabana',
+                lat: -22.9068, lng: -43.1729 
             }
-        }
+        ];
 
-        function processPayPalPayment() {
-            const btn = document.getElementById('paypalBtn');
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Conectando con PayPal...';
-            
-            setTimeout(() => {
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fa-brands fa-paypal"></i> Pagar con PayPal';
-                
-                document.getElementById("paymentSuccess").innerHTML = `
-                    <div style="background: #d4edda; color: #155724; padding: 10px; border-radius: 8px; margin-top: 12px; font-size: 0.85rem;">
-                        <i class="fa-solid fa-circle-check"></i> <b>¡Pago aprobado!</b><br>
-                        <span style="font-size: 0.75rem;">Fondos resguardados hasta finalizar tu experiencia.</span>
-                    </div>
-                    <button style="width: 100%; padding: 12px; margin-top: 10px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="iniciarVideollamada()">
-                        📹 Iniciar experiencia en vivo
-                    </button>
-                `;
-            }, 1500);
-        }
+        // 🔴 Crear marcador rojo personalizado
+        const redIcon = L.divIcon({
+            className: 'custom-marker',
+            html: `<div style="width: 14px; height: 14px; background: #FF385C; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.4);"></div>`,
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
+        });
 
-        function iniciarVideollamada() {
-            closeModal('bookingModal');
-            document.getElementById('callDestination').textContent = currentTour;
-            document.getElementById('callModal').classList.add('active');
-            iniciarCamaraLocal();
-        }
+        // Agregar cada punto al mapa
+        locations.forEach(loc => {
+            const marker = L.marker([loc.lat, loc.lng], { icon: redIcon }).addTo(map);
+            marker.on('click', () => showLocation(loc));
+        });
 
-        function iniciarCamaraLocal() {
-            const video = document.getElementById('localVideo');
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-                    .then(stream => { video.srcObject = stream; })
-                    .catch(err => { 
-                        console.log('Cámara simulada — modo demo');
-                        addSystemMessage('Cámara simulada. En producción, aquí aparecerá el video del anfitrión.');
-                    });
-            }
-        }
+        // 📌 Mostrar experiencias del destino seleccionado
+        function showLocation(loc) {
+            // Actualizar el texto de selección
+            document.getElementById('selectedLocation').classList.add('show');
+            document.getElementById('locName').textContent = loc.name;
+            document.getElementById('locDesc').textContent = loc.desc;
 
-        function detenerCamaraLocal() {
-            const video = document.getElementById('localVideo');
-            if (video.srcObject) {
-                video.srcObject.getTracks().forEach(track => track.stop());
-            }
-        }
+            // Ocultar todas las tarjetas
+            const allCards = document.querySelectorAll('.card');
+            allCards.forEach(card => card.style.display = 'none');
 
-        function sendChat() {
-            const input = document.getElementById('chatInput');
-            const text = input.value.trim();
-            if (!text) return;
-            const log = document.getElementById('chatLog');
-            log.innerHTML += `<div><b>Tú:</b> ${text}</div>`;
-            input.value = '';
-            log.scrollTop = log.scrollHeight;
-        }
+            // Mostrar solo la tarjeta seleccionada
+            const selectedCard = document.querySelector(`.card[data-location="${loc.id}"]`);
+            if (selectedCard) selectedCard.style.display = 'flex';
 
-        function girarCamara(direccion) {
-            addSystemMessage(`Indicación: "Por favor, gira hacia la ${direccion}"`);
-        }
+            // Cambiar título
+            document.getElementById('experiencesTitle').textContent = `📍 Experiencias en ${loc.name.split(',')[0].slice(2)}`;
 
-        function toggleInterface(event) {
-            if (event.target.tagName === 'BUTTON' || event.target.tagName === 'INPUT') return;
-            const ui = document.getElementById('overlayUi');
-            ui.style.opacity = ui.style.opacity === '0' ? '1' : '0';
-        }
-
-        function addSystemMessage(texto) {
-            const log = document.getElementById('chatLog');
-            log.innerHTML += `<div style="color:#94a3b8"><b>Sistema:</b> ${texto}</div>`;
-            log.scrollTop = log.scrollHeight;
+            // Scroll suave hacia las tarjetas
+            document.getElementById('experiencesTitle').scrollIntoView({ behavior: 'smooth' });
         }
     </script>
 </body>
