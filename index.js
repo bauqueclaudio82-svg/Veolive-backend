@@ -1,309 +1,437 @@
-const express = require('express');
-const cors = require('cors');
-const { Pool } = require('pg');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VeoLive - Experiencias turísticas en vivo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --primary: #FF385C;
+            --dark: #222222;
+            --gray: #717171;
+            --light-gray: #F7F7F7;
+            --border: #E0E0E0;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #FFFFFF;
+            color: var(--dark);
+        }
+        header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .nav-links { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        .nav-links a {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+        .nav-links a:hover { background: var(--light-gray); }
+        .nav-links a.btn-primary { background: var(--primary); color: white; }
+        .nav-links a.btn-primary:hover { background: #e02b4c; }
+        .hero {
+            padding: 2rem;
+            text-align: center;
+            background: var(--light-gray);
+            border-bottom: 1px solid var(--border);
+        }
+        .hero h1 { font-size: 2rem; margin: 0 0 0.5rem 0; }
+        .hero p { color: var(--gray); font-size: 1.1rem; margin: 0 0 1.5rem 0; }
+        .hero-buttons { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+        .hero-buttons a {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-explorer {
+            background: white;
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+        .btn-explorer:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-host { background: var(--primary); color: white; }
+        .btn-host:hover { background: #e02b4c; }
+        .map-section {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .map-section h2 { font-size: 1.5rem; margin-bottom: 1rem; text-align: center; }
+        .map-section p { text-align: center; color: var(--gray); margin-bottom: 1rem; }
+        #map {
+            height: 400px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid var(--border);
+            background: #fafafa;
+        }
+        .selected-location {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: var(--light-gray);
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+        }
+        .selected-location.show { display: block; }
+        .selected-location h3 { color: var(--primary); margin-bottom: 0.25rem; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .container h2 { font-size: 1.5rem; margin-bottom: 1.5rem; text-align: center; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            transition: transform 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .card-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            background: var(--light-gray);
+        }
+        .card-content { padding: 1.2rem; }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .location { font-size: 0.9rem; color: var(--gray); font-weight: 600; }
+        .rating { font-size: 0.9rem; font-weight: bold; }
+        .title { font-size: 1.1rem; font-weight: bold; margin: 0 0 0.5rem 0; }
+        .description { font-size: 0.9rem; color: var(--gray); line-height: 1.4; margin-bottom: 1rem; }
+        .footer-card {
+            padding: 1.2rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            background: #FAFAFA;
+        }
+        .price { font-size: 1.25rem; font-weight: bold; color: var(--primary); }
+        .btn-book {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1rem;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.9rem;
+            width: 100%;
+            text-align: center;
+        }
+        .btn-book:hover { background: #e02b4c; }
+        .btn-secondary { background: #f0f0f0; color: #333; }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .modal.active { display: flex; }
+        .modal-box {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 480px;
+            padding: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+        .payment-options { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; }
+        @media (max-width: 768px) {
+            header { flex-direction: column; text-align: center; }
+            .nav-links { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+    <header>
+        <a href="#" class="logo">VeoLive</a>
+        <div class="nav-links">
+            <a href="mailto:bauqueclaudio82@gmail.com?subject=Quiero%20ser%20Explorador%20de%20VeoLive">
+                <i class="fas fa-user"></i> Registrarse
+            </a>
+            <a href="mailto:bauqueclaudio82@gmail.com?subject=Quiero%20ser%20Anfitrión%20en%20VeoLive" class="btn-primary">
+                <i class="fas fa-map-marker-alt"></i> Ser Anfitrión
+            </a>
+        </div>
+    </header>
 
-// ================================
-// CONFIGURACIÓN
-// ================================
+    <section class="hero">
+        <h1>VeoLive 🌍</h1>
+        <p>Conectá con guías locales en cualquier parte del mundo y viví el lugar en tiempo real</p>
+        <p style="font-size: 1rem; color: var(--primary); font-weight: bold;">⏱️ 15 minutos — US$ 10,00 para todas las experiencias</p>
+        <div class="hero-buttons">
+            <a href="mailto:bauqueclaudio82@gmail.com?subject=Quiero%20registrarme%20como%20Explorador" class="btn-explorer">
+                <i class="fas fa-globe"></i> Quiero explorar el mundo
+            </a>
+            <a href="mailto:bauqueclaudio82@gmail.com?subject=Quiero%20ser%20Anfitrión%20en%20VeoLive" class="btn-host">
+                <i class="fas fa-video"></i> Quiero ser Anfitrión
+            </a>
+        </div>
+    </section>
 
-app.use(cors());
-app.use(express.json());
-app.use(express.static('.'));
+    <section class="map-section">
+        <h2>🌍 ¿A dónde querés viajar hoy?</h2>
+        <p>Tocá un punto rojo en el mapa para ver la experiencia disponible</p>
+        <div id="map"></div>
+        <div class="selected-location" id="selectedLocation">
+            <h3 id="locName"></h3>
+            <p id="locDesc"></p>
+        </div>
+    </section>
 
-// ================================
-// BASE DE DATOS
-// ================================
+    <div class="container">
+        <h2>✨ Todas las experiencias disponibles</h2>
+        <div class="grid" id="experiencesGrid">
 
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
-});
+            <div class="card" data-location="paris">
+                <div>
+                    <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600&h=400&fit=crop&q=80" alt="Torre Eiffel al atardecer" class="card-image" loading="lazy">
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="location">🇫🇷 París</span>
+                            <span class="rating">⭐ 4.9</span>
+                        </div>
+                        <h3 class="title">Torre Eiffel y alrededores</h3>
+                        <p class="description">Recorrido en vivo por los alrededores de la Torre Eiffel con un guía local.</p>
+                    </div>
+                </div>
+                <div class="footer-card">
+                    <span class="price">⏱️ 15 min — US$ 10,00</span>
+                    <div class="payment-options">
+                        <a href="https://www.paypal.me/CBauque/10" target="_blank" class="btn-book">
+                            <i class="fa-brands fa-paypal"></i> Pagar con PayPal
+                        </a>
+                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago()">
+                            💵 Pagar con Takenos
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-// ================================
-// INICIALIZAR BASE DE DATOS
-// ================================
+            <div class="card" data-location="tokio">
+                <div>
+                    <img src="https://images.unsplash.com/photo-1540957623405-16700f7c468b?w=600&h=400&fit=crop&q=80" alt="Barrio de Shinjuku de noche" class="card-image" loading="lazy">
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="location">🇯🇵 Tokio</span>
+                            <span class="rating">⭐ 4.8</span>
+                        </div>
+                        <h3 class="title">Luces de Shinjuku</h3>
+                        <p class="description">Paseo en vivo por las calles iluminadas del famoso barrio de Shinjuku.</p>
+                    </div>
+                </div>
+                <div class="footer-card">
+                    <span class="price">⏱️ 15 min — US$ 10,00</span>
+                    <div class="payment-options">
+                        <a href="https://www.paypal.me/CBauque/10" target="_blank" class="btn-book">
+                            <i class="fa-brands fa-paypal"></i> Pagar con PayPal
+                        </a>
+                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago()">
+                            💵 Pagar con Takenos
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-const initDb = async () => {
+            <div class="card" data-location="buenosaires">
+                <div>
+                    <img src="https://images.unsplash.com/photo-1598679258474-4d4120c2d7a5?w=600&h=400&fit=crop&q=80" alt="Caminito, La Boca" class="card-image" loading="lazy">
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="location">🇦🇷 Buenos Aires</span>
+                            <span class="rating">⭐ 4.7</span>
+                        </div>
+                        <h3 class="title">El Caminito - La Boca</h3>
+                        <p class="description">Conocé las calles coloridas del histórico Caminito en vivo.</p>
+                    </div>
+                </div>
+                <div class="footer-card">
+                    <span class="price">⏱️ 15 min — US$ 10,00</span>
+                    <div class="payment-options">
+                        <a href="https://www.paypal.me/CBauque/10" target="_blank" class="btn-book">
+                            <i class="fa-brands fa-paypal"></i> Pagar con PayPal
+                        </a>
+                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago()">
+                            💵 Pagar con Takenos
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-    const queryText = `
-        CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            name VARCHAR(100) NOT NULL,
-            email VARCHAR(150) UNIQUE NOT NULL,
-            role VARCHAR(20) DEFAULT 'tourist',
-            stripe_account_id VARCHAR(100),
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
+            <div class="card" data-location="nuevayork">
+                <div>
+                    <img src="https://images.unsplash.com/photo-1496442226666-8d4d0e49e6a6?w=600&h=400&fit=crop&q=80" alt="Times Square de noche" class="card-image" loading="lazy">
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="location">🇺🇸 Nueva York</span>
+                            <span class="rating">⭐ 4.9</span>
+                        </div>
+                        <h3 class="title">Times Square en vivo</h3>
+                        <p class="description">Viví el brillo y la energía de Times Square desde donde esté tu anfitrión.</p>
+                    </div>
+                </div>
+                <div class="footer-card">
+                    <span class="price">⏱️ 15 min — US$ 10,00</span>
+                    <div class="payment-options">
+                        <a href="https://www.paypal.me/CBauque/10" target="_blank" class="btn-book">
+                            <i class="fa-brands fa-paypal"></i> Pagar con PayPal
+                        </a>
+                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago()">
+                            💵 Pagar con Takenos
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-        CREATE TABLE IF NOT EXISTS tours (
-            id SERIAL PRIMARY KEY,
-            guide_id INT REFERENCES users(id),
-            title VARCHAR(200) NOT NULL,
-            description TEXT,
-            price DECIMAL(10, 2) NOT NULL,
-            scheduled_at TIMESTAMP NOT NULL,
-            status VARCHAR(20) DEFAULT 'scheduled',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
+            <div class="card" data-location="rio">
+                <div>
+                    <img src="https://images.unsplash.com/photo-1483729558449-822cdb692904?w=600&h=400&fit=crop&q=80" alt="Cristo Redentor y Río de Janeiro" class="card-image" loading="lazy">
+                    <div class="card-content">
+                        <div class="card-header">
+                            <span class="location">🇧🇷 Río de Janeiro</span>
+                            <span class="rating">⭐ 4.8</span>
+                        </div>
+                        <h3 class="title">Vista al Cristo Redentor</h3>
+                        <p class="description">Disfrutá de una vista espectacular del Cerro del Corcovado en vivo.</p>
+                    </div>
+                </div>
+                <div class="footer-card">
+                    <span class="price">⏱️ 15 min — US$ 10,00</span>
+                    <div class="payment-options">
+                        <a href="https://www.paypal.me/CBauque/10" target="_blank" class="btn-book">
+                            <i class="fa-brands fa-paypal"></i> Pagar con PayPal
+                        </a>
+                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago()">
+                            💵 Pagar con Takenos
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-        CREATE TABLE IF NOT EXISTS bookings (
-            id SERIAL PRIMARY KEY,
-            tour_id INT REFERENCES tours(id),
-            tourist_id INT REFERENCES users(id),
-            stripe_payment_intent_id VARCHAR(100),
-            amount DECIMAL(10, 2) NOT NULL,
-            platform_fee DECIMAL(10, 2),
-            guide_amount DECIMAL(10, 2),
-            status VARCHAR(20) DEFAULT 'paid',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-    `;
+        </div>
+    </div>
 
-    try {
+    <div class="modal" id="pagoModal">
+        <div class="modal-box">
+            <button class="close" onclick="closeModal('pagoModal')">×</button>
+            <h3 style="font-size: 1.2rem; margin-bottom: 1rem;">💵 Pago por Takenos</h3>
+            <p style="color: #717171; font-size: 0.9rem; margin-bottom: 1.2rem;">Enviá US$ 10,00 a mi cuenta de Takenos:</p>
+            <div style="padding: 16px; background: #f8f9fa; border-radius: 10px; border: 1px solid #e9ecef; margin-bottom: 16px;">
+                <div style="font-weight: bold; margin-bottom: 8px;">Mi usuario de Takenos:</div>
+                <div style="background: white; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 1rem; text-align: center; color: #FF385C; font-weight: bold;">
+                    @bauqueclaudio82
+                </div>
+                <div style="margin-top: 10px; font-size: 0.9rem;">
+                    <strong>Monto:</strong> US$ 10,00
+                </div>
+            </div>
+            <div style="background: #fff3cd; border-radius: 8px; padding: 12px; font-size: 0.85rem; color: #856404; line-height: 1.5;">
+                ✅ <strong>Después de pagar:</strong> Enviame un mensaje con el comprobante y coordinamos el horario con tu anfitrión.<br><br>
+                📧 Contacto: bauqueclaudio82@gmail.com
+            </div>
+        </div>
+    </div>
 
-        await pool.query(queryText);
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const map = L.map('map').setView([15, 0], 2);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© VeoLive | Datos: OpenStreetMap',
+                maxZoom: 18
+            }).addTo(map);
 
-        console.log('Tablas inicializadas correctamente');
+            const locations = [
+                { id: 'paris', name: '🇫🇷 París, Francia', desc: '1 experiencia disponible — 15 min / US$ 10,00', lat: 48.8584, lng: 2.2945 },
+                { id: 'tokio', name: '🇯🇵 Tokio, Japón', desc: '1 experiencia disponible — 15 min / US$ 10,00', lat: 35.6762, lng: 139.6503 },
+                { id: 'buenosaires', name: '🇦🇷 Buenos Aires, Argentina', desc: '1 experiencia disponible — 15 min / US$ 10,00', lat: -34.6037, lng: -58.3816 },
+                { id: 'nuevayork', name: '🇺🇸 Nueva York, EE. UU.', desc: '1 experiencia disponible — 15 min / US$ 10,00', lat: 40.7128, lng: -74.0060 },
+                { id: 'rio', name: '🇧🇷 Río de Janeiro, Brasil', desc: '1 experiencia disponible — 15 min / US$ 10,00', lat: -22.9068, lng: -43.1729 }
+            ];
 
-    } catch (error) {
-
-        console.error(
-            'Error al crear las tablas:',
-            error.message
-        );
-
-    }
-};
-
-initDb();
-
-// ================================
-// RUTA PRINCIPAL
-// ================================
-
-app.get('/', async (req, res) => {
-
-    try {
-
-        const result = await pool.query('SELECT NOW()');
-
-        res.json({
-            message: 'VeoLive API running!',
-            dbTime: result.rows[0].now,
-            status: 'Database tables ready'
-        });
-
-    } catch (error) {
-
-        console.error(error);
-
-        res.status(500).json({
-            error: 'Error de conexión con la base de datos'
-        });
-
-    }
-
-});
-
-// ================================
-// CREAR PAGO STRIPE
-// 80% ANFITRIÓN
-// 20% VEOLIVE
-// ================================
-
-app.post('/api/crear-pago', async (req, res) => {
-
-    try {
-
-        const {
-            location,
-            duration,
-            guide_id
-        } = req.body;
-
-        // -------------------------------
-        // VALIDACIÓN
-        // -------------------------------
-
-        if (!location || !duration || !guide_id) {
-
-            return res.status(400).json({
-                error: 'Faltan datos de la experiencia o del anfitrión'
+            const redIcon = L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="width: 14px; height: 14px; background: #FF385C; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.4);"></div>`,
+                iconSize: [14, 14],
+                iconAnchor: [7, 7]
             });
 
-        }
-
-        // -------------------------------
-        // BUSCAR ANFITRIÓN
-        // -------------------------------
-
-        const guideResult = await pool.query(
-            `
-            SELECT id, name, stripe_account_id
-            FROM users
-            WHERE id = $1
-            AND role = 'guide'
-            `,
-            [guide_id]
-        );
-
-        if (guideResult.rows.length === 0) {
-
-            return res.status(404).json({
-                error: 'Anfitrión no encontrado'
+            locations.forEach(loc => {
+                const marker = L.marker([loc.lat, loc.lng], { icon: redIcon }).addTo(map);
+                marker.on('click', () => showLocation(loc));
             });
-
-        }
-
-        const guide = guideResult.rows[0];
-
-        // -------------------------------
-        // VERIFICAR STRIPE CONNECT
-        // -------------------------------
-
-        if (!guide.stripe_account_id) {
-
-            return res.status(400).json({
-                error: 'El anfitrión todavía no tiene configurada su cuenta de pagos'
-            });
-
-        }
-
-        // -------------------------------
-        // PRECIOS
-        // -------------------------------
-
-        let amount;
-        let durationText;
-
-        if (duration === '15') {
-
-            amount = 1000;
-            durationText = '15 minutos';
-
-        } else if (duration === '30') {
-
-            amount = 1800;
-            durationText = '30 minutos';
-
-        } else if (duration === '60') {
-
-            amount = 3000;
-            durationText = '1 hora';
-
-        } else {
-
-            return res.status(400).json({
-                error: 'Duración no válida'
-            });
-
-        }
-
-        // -------------------------------
-        // COMISIÓN VEOLIVE = 20%
-        // -------------------------------
-
-        const platformFee = Math.round(amount * 0.20);
-
-        // El 80% va al anfitrión
-        const guideAmount = amount - platformFee;
-
-        // -------------------------------
-        // CREAR CHECKOUT
-        // -------------------------------
-
-        const session = await stripe.checkout.sessions.create({
-
-            payment_method_types: ['card'],
-
-            line_items: [
-                {
-                    price_data: {
-
-                        currency: 'usd',
-
-                        product_data: {
-                            name: `Experiencia VeoLive: ${location}`,
-                            description: `Duración: ${durationText}`
-                        },
-
-                        unit_amount: amount
-                    },
-
-                    quantity: 1
-                }
-            ],
-
-            mode: 'payment',
-
-            payment_intent_data: {
-
-                // 20% para VeoLive
-                application_fee_amount: platformFee,
-
-                // 80% para el anfitrión
-                transfer_data: {
-                    destination: guide.stripe_account_id
-                }
-            },
-
-            metadata: {
-                location: location,
-                duration: duration,
-                guide_id: guide.id,
-                guide_name: guide.name,
-                platform_fee: platformFee,
-                guide_amount: guideAmount
-            },
-
-            success_url:
-                `${req.protocol}://${req.get('host')}/cliente.html?success=true`,
-
-            cancel_url:
-                `${req.protocol}://${req.get('host')}/cliente.html?canceled=true`
         });
 
-        // -------------------------------
-        // RESPUESTA
-        // -------------------------------
+        function showLocation(loc) {
+            document.getElementById('selectedLocation').classList.add('show');
+            document.getElementById('locName').textContent = loc.name;
+            document.getElementById('locDesc').textContent = loc.desc;
+            document.querySelector(`[data-location="${loc.id}"]`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
 
-        res.json({
-            success: true,
-            url: session.url,
-            total: amount,
-            veolive_fee: platformFee,
-            guide_amount: guideAmount
+        function mostrarOpcionesPago() {
+            document.getElementById('pagoModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        document.getElementById('pagoModal').addEventListener('click', function(e) {
+            if (e.target === this) closeModal('pagoModal');
         });
-
-    } catch (error) {
-
-        console.error(
-            'Error al crear la sesión de Stripe:',
-            error
-        );
-
-        res.status(500).json({
-            error: 'No se pudo crear el pago'
-        });
-
-    }
-
-});
-
-// ================================
-// INICIAR SERVIDOR
-// ================================
-
-app.listen(PORT, () => {
-
-    console.log(
-        `Servidor VeoLive corriendo en el puerto ${PORT}`
-    );
-
-});
+    </script>
+</body>
+</html>
