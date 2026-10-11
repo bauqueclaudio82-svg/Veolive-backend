@@ -13,6 +13,7 @@
             --gray: #717171;
             --light-gray: #F7F7F7;
             --border: #E0E0E0;
+            --success: #10B981;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -36,7 +37,7 @@
             text-decoration: none;
         }
         .nav-links { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-        .nav-links a {
+        .nav-links a, .nav-links button {
             color: var(--dark);
             text-decoration: none;
             font-weight: 600;
@@ -44,10 +45,13 @@
             padding: 0.5rem 1rem;
             border-radius: 8px;
             transition: background 0.2s;
+            border: none;
+            background: none;
+            cursor: pointer;
         }
-        .nav-links a:hover { background: var(--light-gray); }
-        .nav-links a.btn-primary { background: var(--primary); color: white; }
-        .nav-links a.btn-primary:hover { background: #e02b4c; }
+        .nav-links a:hover, .nav-links button:hover { background: var(--light-gray); }
+        .nav-links .btn-primary { background: var(--primary); color: white; }
+        .nav-links .btn-primary:hover { background: #e02b4c; }
         .hero {
             padding: 2rem;
             text-align: center;
@@ -55,9 +59,10 @@
             border-bottom: 1px solid var(--border);
         }
         .hero h1 { font-size: 2rem; margin: 0 0 0.5rem 0; }
-        .hero p { color: var(--gray); font-size: 1.1rem; margin: 0 0 1.5rem 0; }
+        .hero p { color: var(--gray); font-size: 1.1rem; margin: 0 0 0.5rem 0; }
+        .hero .price-note { font-size: 1rem; color: var(--primary); font-weight: bold; margin-bottom: 1.5rem; }
         .hero-buttons { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
-        .hero-buttons a {
+        .hero-buttons a, .hero-buttons button {
             padding: 0.75rem 1.5rem;
             border-radius: 8px;
             font-weight: bold;
@@ -65,6 +70,9 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
         }
         .btn-explorer {
             background: white;
@@ -175,6 +183,8 @@
             padding: 1.5rem;
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
             position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         .close {
             position: absolute;
@@ -186,6 +196,42 @@
             cursor: pointer;
             color: var(--gray);
         }
+        .modal h3 { font-size: 1.25rem; margin-bottom: 1.25rem; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .form-group textarea { min-height: 100px; resize: vertical; }
+        .submit-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+        }
+        .submit-btn:hover { background: #e02b4c; }
+        .success-message {
+            text-align: center;
+            padding: 2rem 0;
+            display: none;
+        }
+        .success-message.show { display: block; }
+        .success-message i { font-size: 3rem; color: var(--success); margin-bottom: 1rem; }
+        .success-message h3 { color: var(--success); margin-bottom: 0.5rem; }
         .payment-options { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; }
         @media (max-width: 768px) {
             header { flex-direction: column; text-align: center; }
@@ -199,25 +245,25 @@
         <a href="#" class="logo">VeoLive</a>
         <div class="nav-links">
             <a href="mailto:bauqueclaudio82@gmail.com?subject=Quiero%20ser%20Explorador%20de%20VeoLive">
-                <i class="fas fa-user"></i> Registrarse
+                <i class="fas fa-user"></i> Soy Explorador
             </a>
-            <a href="mailto:bauqueclaudio82@gmail.com?subject=Quiero%20ser%20Anfitrión%20en%20VeoLive" class="btn-primary">
+            <button class="btn-primary" onclick="openHostModal()">
                 <i class="fas fa-map-marker-alt"></i> Ser Anfitrión
-            </a>
+            </button>
         </div>
     </header>
 
     <section class="hero">
         <h1>VeoLive 🌍</h1>
         <p>Conectá con guías locales en cualquier parte del mundo y viví el lugar en tiempo real</p>
-        <p style="font-size: 1rem; color: var(--primary); font-weight: bold;">⏱️ 15 minutos — US$ 10,00 para todas las experiencias</p>
+        <p class="price-note">⏱️ 15 minutos — US$ 10,00 para todas las experiencias</p>
         <div class="hero-buttons">
-            <a href="mailto:bauqueclaudio82@gmail.com?subject=Quiero%20registrarme%20como%20Explorador" class="btn-explorer">
+            <a href="mailto:bauqueclaudio82@gmail.com?subject=Quiero%20reservar%20una%20experiencia" class="btn-explorer">
                 <i class="fas fa-globe"></i> Quiero explorar el mundo
             </a>
-            <a href="mailto:bauqueclaudio82@gmail.com?subject=Quiero%20ser%20Anfitrión%20en%20VeoLive" class="btn-host">
+            <button class="btn-host" onclick="openHostModal()">
                 <i class="fas fa-video"></i> Quiero ser Anfitrión
-            </a>
+            </button>
         </div>
     </section>
 
@@ -253,7 +299,7 @@
                         <a href="https://www.paypal.me/CBauque/10" target="_blank" class="btn-book">
                             <i class="fa-brands fa-paypal"></i> Pagar con PayPal
                         </a>
-                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago()">
+                        <button class="btn-book btn-secondary" onclick="openPaymentModal()">
                             💵 Pagar con Takenos
                         </button>
                     </div>
@@ -278,7 +324,7 @@
                         <a href="https://www.paypal.me/CBauque/10" target="_blank" class="btn-book">
                             <i class="fa-brands fa-paypal"></i> Pagar con PayPal
                         </a>
-                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago()">
+                        <button class="btn-book btn-secondary" onclick="openPaymentModal()">
                             💵 Pagar con Takenos
                         </button>
                     </div>
@@ -303,7 +349,7 @@
                         <a href="https://www.paypal.me/CBauque/10" target="_blank" class="btn-book">
                             <i class="fa-brands fa-paypal"></i> Pagar con PayPal
                         </a>
-                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago()">
+                        <button class="btn-book btn-secondary" onclick="openPaymentModal()">
                             💵 Pagar con Takenos
                         </button>
                     </div>
@@ -319,7 +365,7 @@
                             <span class="rating">⭐ 4.9</span>
                         </div>
                         <h3 class="title">Times Square en vivo</h3>
-                        <p class="description">Viví el brillo y la energía de Times Square desde donde esté tu anfitrión.</p>
+                        <p class="description">Viví el brillo y la energía de Times Square en tiempo real.</p>
                     </div>
                 </div>
                 <div class="footer-card">
@@ -328,7 +374,7 @@
                         <a href="https://www.paypal.me/CBauque/10" target="_blank" class="btn-book">
                             <i class="fa-brands fa-paypal"></i> Pagar con PayPal
                         </a>
-                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago()">
+                        <button class="btn-book btn-secondary" onclick="openPaymentModal()">
                             💵 Pagar con Takenos
                         </button>
                     </div>
@@ -353,7 +399,7 @@
                         <a href="https://www.paypal.me/CBauque/10" target="_blank" class="btn-book">
                             <i class="fa-brands fa-paypal"></i> Pagar con PayPal
                         </a>
-                        <button class="btn-book btn-secondary" onclick="mostrarOpcionesPago()">
+                        <button class="btn-book btn-secondary" onclick="openPaymentModal()">
                             💵 Pagar con Takenos
                         </button>
                     </div>
@@ -363,76 +409,50 @@
         </div>
     </div>
 
-    <div class="modal" id="pagoModal">
+    <!-- Modal: Formulario para ser Anfitrión -->
+    <div class="modal" id="hostModal">
         <div class="modal-box">
-            <button class="close" onclick="closeModal('pagoModal')">×</button>
-            <h3 style="font-size: 1.2rem; margin-bottom: 1rem;">💵 Pago por Takenos</h3>
-            <p style="color: #717171; font-size: 0.9rem; margin-bottom: 1.2rem;">Enviá US$ 10,00 a mi cuenta de Takenos:</p>
-            <div style="padding: 16px; background: #f8f9fa; border-radius: 10px; border: 1px solid #e9ecef; margin-bottom: 16px;">
-                <div style="font-weight: bold; margin-bottom: 8px;">Mi usuario de Takenos:</div>
-                <div style="background: white; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 1rem; text-align: center; color: #FF385C; font-weight: bold;">
-                    @bauqueclaudio82
-                </div>
-                <div style="margin-top: 10px; font-size: 0.9rem;">
-                    <strong>Monto:</strong> US$ 10,00
-                </div>
+            <button class="close" onclick="closeHostModal()">×</button>
+            
+            <div class="form-content" id="hostFormContent">
+                <h3>🌍 Quiero ser Anfitrión</h3>
+                <form id="hostForm">
+                    <div class="form-group">
+                        <label for="nombre">Tu nombre completo *</label>
+                        <input type="text" id="nombre" name="nombre" required placeholder="Juan Pérez">
+                    </div>
+                    <div class="form-group">
+                        <label for="ciudad">¿En qué ciudad y país estás? *</label>
+                        <input type="text" id="ciudad" name="ciudad" required placeholder="París, Francia">
+                    </div>
+                    <div class="form-group">
+                        <label for="correo">Tu correo electrónico *</label>
+                        <input type="email" id="correo" name="correo" required placeholder="tu@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="whatsapp">Tu WhatsApp (con código de país)</label>
+                        <input type="tel" id="whatsapp" name="whatsapp" placeholder="+54 9 1234 5678">
+                    </div>
+                    <div class="form-group">
+                        <label for="experiencia">¿Qué te gustaría mostrar? *</label>
+                        <textarea id="experiencia" name="experiencia" required placeholder="Caminatas por el centro histórico, vistas desde miradores..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="idiomas">¿Qué idiomas hablas?</label>
+                        <input type="text" id="idiomas" name="idiomas" placeholder="Español, Inglés, Francés">
+                    </div>
+                    <button type="submit" class="submit-btn">Enviar solicitud ✅</button>
+                </form>
             </div>
-            <div style="background: #fff3cd; border-radius: 8px; padding: 12px; font-size: 0.85rem; color: #856404; line-height: 1.5;">
-                ✅ <strong>Después de pagar:</strong> Enviame un mensaje con el comprobante y coordinamos el horario con tu anfitrión.<br><br>
-                📧 Contacto: bauqueclaudio82@gmail.com
+            
+            <div class="success-message" id="hostSuccessMsg">
+                <i class="fas fa-check-circle"></i>
+                <h3>¡Solicitud enviada!</h3>
+                <p>Gracias por querer ser parte de VeoLive. Te contactaremos pronto por correo para coordinar los siguientes pasos.</p>
+                <br>
+                <button class="submit-btn" onclick="closeHostModal()">Cerrar</button>
             </div>
         </div>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const map = L.map('map').setView([15, 0], 2);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© VeoLive | Datos: OpenStreetMap',
-                maxZoom: 18
-            }).addTo(map);
-
-            const locations = [
-                { id: 'paris', name: '🇫🇷 París, Francia', desc: '1 experiencia disponible — 15 min / US$ 10,00', lat: 48.8584, lng: 2.2945 },
-                { id: 'tokio', name: '🇯🇵 Tokio, Japón', desc: '1 experiencia disponible — 15 min / US$ 10,00', lat: 35.6762, lng: 139.6503 },
-                { id: 'buenosaires', name: '🇦🇷 Buenos Aires, Argentina', desc: '1 experiencia disponible — 15 min / US$ 10,00', lat: -34.6037, lng: -58.3816 },
-                { id: 'nuevayork', name: '🇺🇸 Nueva York, EE. UU.', desc: '1 experiencia disponible — 15 min / US$ 10,00', lat: 40.7128, lng: -74.0060 },
-                { id: 'rio', name: '🇧🇷 Río de Janeiro, Brasil', desc: '1 experiencia disponible — 15 min / US$ 10,00', lat: -22.9068, lng: -43.1729 }
-            ];
-
-            const redIcon = L.divIcon({
-                className: 'custom-marker',
-                html: `<div style="width: 14px; height: 14px; background: #FF385C; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 4px rgba(0,0,0,0.4);"></div>`,
-                iconSize: [14, 14],
-                iconAnchor: [7, 7]
-            });
-
-            locations.forEach(loc => {
-                const marker = L.marker([loc.lat, loc.lng], { icon: redIcon }).addTo(map);
-                marker.on('click', () => showLocation(loc));
-            });
-        });
-
-        function showLocation(loc) {
-            document.getElementById('selectedLocation').classList.add('show');
-            document.getElementById('locName').textContent = loc.name;
-            document.getElementById('locDesc').textContent = loc.desc;
-            document.querySelector(`[data-location="${loc.id}"]`).scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-
-        function mostrarOpcionesPago() {
-            document.getElementById('pagoModal').classList.add('active');
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).classList.remove('active');
-        }
-
-        document.getElementById('pagoModal').addEventListener('click', function(e) {
-            if (e.target === this) closeModal('pagoModal');
-        });
-    </script>
-</body>
-    </html>
-    
+    <!-- Modal: Pago con Takenos
